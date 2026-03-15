@@ -1,63 +1,123 @@
-# Fund Manager
+## What is the Fund Manager Agent?
 
-LangGraph-based Multi-Agent Fund Management System powered by **AWS Bedrock AgentCore Runtime** and **AgentCore Memory**.
+The Fund Manager is an intelligent AI orchestrator that integrates all three specialized agents (Financial Analyst, Portfolio Architect, and Risk Manager) into a seamless, automated workflow. It serves as the central hub that coordinates comprehensive fund management services, processes your complete financial information through all analysis stages, and maintains permanent records of all consultations for future reference.
 
-## Overview
-
-An AI orchestrator that integrates 3 specialized agents through LangGraph workflows to provide comprehensive fund management services with automatic management history tracking.
+This agent serves as the **final orchestration stage** in the AI Fund Manager system, providing end-to-end intelligent fund management with complete history tracking and AI-powered memory management.
 
 ### Core Features
 
-- **LangGraph Workflow**: Sequential collaboration system of 3 agents
-- **Real-time Streaming**: Real-time visualization of each agent's reasoning process and tool usage
-- **AgentCore Memory**: Automatic fund management history summarization and permanent storage with SUMMARY strategy
-- **Full Automation**: Complete fund management process with user input only
+- **Multi-Agent Orchestration**: Seamless coordination of 3 specialized agents through LangGraph workflows
+- **Real-time Streaming**: Live visualization of each agent's reasoning, tool usage, and decision-making process
+- **Automatic Memory Management**: Permanent consultation history with AI-powered summarization
+- **Comprehensive Reporting**: Complete fund management analysis in one integrated report
+- **Full Automation**: Complete end-to-end process with single user input
 
-## Architecture
+## How It Works
 
-![Fund Manager](../static/fund_manager.png)
+The Fund Manager orchestrates a sophisticated 4-stage workflow that coordinates all AI agents:
 
-### Technology Stack
+### Agent Workflow
 
-- **AI Framework**: LangGraph + Strands Agents SDK
-- **Infrastructure**: AWS Bedrock AgentCore Runtime + Memory
-- **LLM**: Orchestrates other agents (no direct model usage)
-- **Data Sources**: Via integrated agents (yfinance through MCP)
-- **Protocol**: Agent-to-agent communication
-- **UI**: Streamlit
+1. **User Input Reception**: You provide comprehensive financial information:
+   - Investment amount and target amount
+   - Age and investment experience
+   - Investment purpose and timeline
+   - Investment sector preferences
 
-### Processing Flow
+2. **Financial Analysis Stage** (Agent: Financial Analyst)
+   - Agent analyzes your financial profile
+   - Determines your risk profile (Conservative/Moderate/Aggressive)
+   - Calculates required annual returns
+   - Recommends suitable investment sectors
+   - Output: Risk profile & sector recommendations
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant S as Streamlit
-    participant I as Fund Manager
-    participant F as Financial Analyst
-    participant P as Portfolio Architect
-    participant R as Risk Manager
-    participant M as AgentCore Memory
+3. **Portfolio Design Stage** (Agent: Portfolio Architect)
+   - Agent receives risk profile from Financial Analyst
+   - Selects 3 optimal ETFs using real-time market data
+   - Performs Monte Carlo simulations for risk analysis
+   - Calculates diversification benefits through correlation analysis
+   - Determines optimal investment allocations
+   - Output: 3-ETF portfolio with allocations and scores
 
-    U->>S: Input investment info
-    S->>I: Start consultation
-    I->>F: Financial analysis request
-    F-->>I: Risk profile & target return
-    I->>P: Portfolio design request
-    P-->>I: Portfolio allocation
-    I->>R: Risk analysis request
-    R-->>I: Risk scenarios
-    I->>M: Save fund management summary
-    I-->>S: Complete results
-    S-->>U: Display comprehensive report
+4. **Risk Analysis Stage** (Agent: Risk Manager)
+   - Agent receives portfolio from Portfolio Architect
+   - Analyzes latest market news for each ETF
+   - Monitors macroeconomic indicators
+   - Assesses geopolitical risks across regions
+   - Develops economic scenarios
+   - Recommends portfolio adjustments for different scenarios
+   - Output: Risk scenarios & adjustment strategies
+
+5. **Memory & Reporting**:
+   - All analysis results compiled into comprehensive report
+   - Consultation automatically summarized and stored
+   - History accessible for future reference and tracking
+
+### Processing Architecture
+
+```
+Your Financial Information
+    ↓
+[Fund Manager Orchestrator - LangGraph]
+    ↓
+Stage 1: Financial Analyst Agent
+├─ Analyze financial profile
+├─ Calculate risk profile
+└─ Recommend sectors → Output to Portfolio Architect
+    ↓
+Stage 2: Portfolio Architect Agent
+├─ Retrieve risk profile
+├─ Select ETFs using real-time data
+├─ Run Monte Carlo simulations
+├─ Analyze correlations
+└─ Calculate allocations → Output to Risk Manager
+    ↓
+Stage 3: Risk Manager Agent
+├─ Retrieve portfolio
+├─ Collect market news
+├─ Monitor economic indicators
+├─ Assess geopolitical risks
+├─ Develop scenarios
+└─ Calculate adjustments → Output to Fund Manager
+    ↓
+Stage 4: Memory & Reporting
+├─ Compile comprehensive report
+├─ Summarize consultation
+├─ Store in permanent memory
+└─ Display to user
+    ↓
+Complete Fund Management Report with History
 ```
 
-## Installation and Setup
+## Technology Stack
 
-### 1. Environment Setup
+- **Orchestration Framework**: LangGraph (agent workflow coordination)
+- **AI Framework**: AWS Bedrock AgentCore Runtime
+- **Memory System**: AgentCore Memory with SUMMARY strategy
+- **LLM Models**: GPT-OSS
+- **Data Protocol**: MCP (Model Context Protocol) via integrated agents
+- **Data Source**: yfinance (through agent integrations)
+- **Infrastructure**: AWS (serverless, auto-scaling)
+- **Authentication**: AWS Cognito JWT
+- **UI Framework**: Streamlit
+- **Language**: Python
+
+## Setup Instructions
+
+### Prerequisites
+
+- AWS Account with Bedrock, Lambda, and API Gateway access
+- Python 3.8 or higher
+- AWS CLI configured with credentials
+- All 3 agent systems deployed:
+  - Financial Analyst
+  - Portfolio Architect (with MCP Server)
+  - Risk Manager (with Lambda Layer, Lambda, Gateway)
+
+### Step 1: Install Dependencies
 
 ```bash
-# Install dependencies from root folder
-cd ..
+# From root directory
 pip install -r requirements.txt
 
 # Configure AWS credentials
@@ -67,144 +127,146 @@ aws configure
 cd fund_manager
 ```
 
-### 2. Prerequisites
+### Step 2: Deploy AgentCore Memory (Required First)
 
-All individual agents must be deployed first:
-
-```bash
-# 1. Financial Analyst
-cd financial_analyst && python deploy.py
-
-# 2. Portfolio Architect (including MCP Server)
-cd ../portfolio_architect/mcp_server && python deploy_mcp.py
-cd .. && python deploy.py
-
-# 3. Risk Manager (4-step sequential deployment)
-cd ../risk_manager/lambda_layer && python deploy_lambda_layer.py
-cd ../lambda && python deploy_lambda.py
-cd ../gateway && python deploy_gateway.py
-cd .. && python deploy.py
-```
-
-### 3. Deployment
+The AgentCore Memory system stores consultation history:
 
 ```bash
-# Deploy Memory first
-cd fund_manager/agentcore_memory
+# Deploy the Memory service
+cd agentcore_memory
 python deploy_agentcore_memory.py
 
-# Deploy Fund Manager Runtime
-cd .. && python deploy.py
-
-# Run Streamlit app
-streamlit run app.py
-
-# Access http://localhost:8501 in browser
+# Verify deployment
+cat deployment_info.json
 ```
 
-## Usage
+**What this does:**
 
-### New Fund Management
+- Deploys the Memory service to AWS Bedrock
+- Configures SUMMARY strategy for automatic summarization
+- Sets up namespace structure for consultation storage
+- Enables history retrieval and tracking
 
-1. Input client information (age, fund investment experience, fund amount, target amount, etc.)
-2. Execute LangGraph workflow (3 agents in sequential execution)
-3. Real-time monitoring (check each agent's reasoning process and tool usage)
-4. Review comprehensive results (Financial Analysis → Portfolio Design → Risk Scenarios)
+### Step 3: Deploy Fund Manager Agent
 
-### Management History
+```bash
+# Deploy the Fund Manager orchestrator
+cd ..
+python deploy.py
 
-- Review fund management summaries automatically generated by AgentCore SUMMARY strategy
-- Clean display of summary content organized by topics
+# Verify deployment (creates deployment_info.json)
+cat deployment_info.json
+```
 
-## Input/Output
+**What this does:**
 
-### Input Information
+- Deploys the Fund Manager agent to AWS Bedrock
+- Loads references to all 3 integrated agents
+- Configures LangGraph workflow orchestration
+- Sets up memory integration for history tracking
 
-- **Available Fund Amount**: In hundred millions (e.g., 0.5 = 50 million)
-- **Target Amount**: Target amount after 1 year
-- **Age**: Age range selection
-- **Fund Investment Experience**: Years of stock fund investment experience
-- **Fund Management Purpose**: Short-term profit, retirement planning, etc.
-- **Areas of Interest**: Multiple selection from 10 fund investment sectors
+### Step 4: Run the Streamlit Web App
 
-### Output Results
+```bash
+# Start the web interface
+streamlit run app.py
 
-![Fund Manager Output](../static/fund_manager_output.png)
+# Access the app at http://localhost:8501
+```
+
+### Step 5: Use the Application
+
+1. Open your browser to `http://localhost:8501`
+2. Enter your complete financial information in the form
+3. Click "Start Fund Consultation" to begin
+4. Watch real-time progress as each agent runs
+5. Review your complete comprehensive fund management report
+6. Access past consultations from the history panel
+
+### Sample Output Breakdown
+
+```
+┌──────────────────────────────────────────────────────────┐
+│      COMPREHENSIVE FUND MANAGEMENT REPORT                │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│ ════════ STAGE 1: FINANCIAL ANALYSIS ════════            │
+│ Risk Profile: MODERATE                                   │
+│ • Age: 35-45 years                                       │
+│ • Experience: 5-10 years                                 │
+│ • Required Return: 18.2% annually                        │
+│ • Recommended Sectors: [Tech] [Healthcare] [Finance]    │
+│                                                          │
+│ ════════ STAGE 2: PORTFOLIO DESIGN ════════              │
+│ Your Optimized Portfolio:                                │
+│ • VTI (US Total Market)         40%  (Profitability: 8.2)│
+│ • VXUS (International)          35%  (Risk Mgmt: 8.1)    │
+│ • BND (US Bonds)                25%  (Diversification: 8.5)│
+│                                                          │
+│ Expected Return: 16.8% annually                          │
+│ Portfolio Risk Score: 8.3/10 (Well-balanced)             │
+│                                                          │
+│ ════════ STAGE 3: RISK ANALYSIS ════════                │
+│ Market Environment: Stable growth, moderate volatility   │
+│                                                          │
+│ SCENARIO 1: Continued Growth (65% probability)           │
+│ Action: Maintain current 40-35-25 allocation             │
+│ Expected Return: +18.5%                                  │
+│                                                          │
+│ SCENARIO 2: Market Correction (35% probability)          │
+│ Action: Adjust to 25-20-55 (reduce equity, increase bonds)│
+│ Expected Return: +2.3%                                   │
+│                                                          │
+│ Key Risks: Interest rate spike, tech earnings weakness   │
+│                                                          │
+│ ════════ EXECUTIVE SUMMARY ════════                      │
+│ Your moderate risk profile aligns perfectly with the     │
+│ recommended portfolio. This well-diversified mix of      │
+│ US equities, international stocks, and bonds should     │
+│ achieve your 18.2% return target while managing risk.   │
+│                                                          │
+│ Recommended Actions:                                     │
+│ 1. Allocate initial capital according to 40-35-25 split │
+│ 2. Monitor quarterly and rebalance annually              │
+│ 3. Adjust if VIX exceeds 25 or rates spike               │
+│ 4. Review again in 6 months or if major market shift     │
+│                                                          │
+│ ════════ CONSULTATION METADATA ════════                  │
+│ Consultation ID: fund-20260315-a7f3b2e1                  │
+│ Timestamp: March 15, 2026, 14:30 UTC                     │
+│ Status: Completed & Saved to History                     │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+```
 
 ## AgentCore Memory System
 
 ### SUMMARY Strategy
 
-- **Automatic Summarization**: Entire consultation sessions automatically summarized
-- **Short-term Storage**: Individual agent results stored as conversations (7 days)
-- **Long-term Preservation**: SUMMARY strategy creates permanent consultation summaries
-- **Namespace Structure**: `fund/session/{sessionId}` for organized storage
+The Fund Manager uses an intelligent memory system to track all consultations:
 
-## Customization
+**Memory Features**:
 
-### Configuration Changes
+- **Automatic Summarization**: Each consultation is automatically analyzed and summarized
+- **Permanent Storage**: Summaries stored permanently in AgentCore Memory
+- **Smart Organization**: Consultations organized by date, risk profile, and sectors
+- **History Access**: Review past consultations and track portfolio performance over time
+- **Pattern Recognition**: AI identifies trends and common recommendations
 
-```python
-# fund_manager.py
-class Config:
-    REGION = "us-west-2"  # Change AWS region
-```
+**Memory Namespace**: `fund/session/{sessionId}`
 
-### Agent Configuration
+**Storage Tiers**:
 
-```python
-# fund_manager.py
-class AgentClient:
-    def _load_agent_arns(self):
-        # Automatically loads other agent ARNs
-        return {
-            "financial": "arn:aws:bedrock-agentcore:...",
-            "portfolio": "arn:aws:bedrock-agentcore:...",
-            "risk": "arn:aws:bedrock-agentcore:..."
-        }
-```
+- Short-term: Individual agent interactions (7 days)
+- Long-term: Consultation summaries (permanent)
+- Metadata: Tags, categories, and searchable attributes
 
-## Monitoring
+### History Panel Features
 
-### Log Checking
+In the Streamlit app, you can:
 
-```bash
-aws logs tail /aws/bedrock-agentcore/fund-manager --follow
-```
-
-### Performance Metrics
-
-- Total execution time: 60-120 seconds (sequential calls)
-- Memory save time: 2-5 seconds
-- Success rate: 95%+ (when all agents are properly deployed)
-
-### Troubleshooting
-
-1. Agent call failure → Check individual agent deployment status
-2. Memory save failure → Check IAM permissions and Memory configuration
-
-## Project Structure
-
-```
-fund_manager/
-├── fund_manager.py    # LangGraph-based Multi-Agent workflow
-├── deploy.py               # AgentCore Runtime deployment (auto-load other agent ARNs)
-├── app.py                  # Streamlit web app (real-time streaming + history)
-
-├── cleanup.py              # System cleanup
-├── requirements.txt        # Python dependencies
-└── agentcore_memory/       # AgentCore Memory
-    ├── deploy_agentcore_memory.py # Memory deployment (SUMMARY strategy)
-    └── deployment_info.json      # Memory deployment info
-```
-
-## Full System Integration
-
-This Fund Manager is the final orchestration stage of the **AI Fund Manager** system:
-
-1. **Financial Analyst** → Financial analysis and risk profile assessment
-2. **Portfolio Architect** → Real-time ETF data-based portfolio design
-3. **Risk Manager** → News analysis and risk scenario planning
-4. **Fund Manager** (current) → Multi-agent orchestration and consultation history management
-
-The complete system provides end-to-end fund management services through seamless agent collaboration.
+1. View all past consultations with timestamps
+2. Review automatically generated summaries
+3. Compare recommendations across consultations
+4. Track allocation changes over time
+5. Export consultation reports

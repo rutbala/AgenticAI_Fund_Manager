@@ -1,40 +1,106 @@
-# Portfolio Architect
+## What is the Portfolio Architect Agent?
 
-AI Portfolio Architect powered by **AWS Bedrock AgentCore Runtime** and **MCP Server**.
+The Portfolio Architect is an intelligent AI agent that designs optimal investment portfolios using real-time ETF market data. Based on the risk profile and recommendations from the Financial Analyst, this agent constructs a diversified portfolio of 3 ETFs tailored to your financial goals, risk tolerance, and target returns.
 
-## Overview
-
-An AI agent that designs optimal investment portfolios using real-time ETF data based on Financial Analyst's financial analysis results.
+This agent serves as the **second stage** in the AI Fund Manager system, transforming financial analysis into actionable portfolio allocations with real-time market data.
 
 ### Core Features
 
-- **Real-time ETF Analysis**: Real-time data retrieval based on yfinance through MCP Server
-- **Monte Carlo Simulation**: Accurate risk analysis with 1000 simulations
-- **Correlation Analysis**: Measurement and optimization of diversification effects between ETFs
-- **Portfolio Evaluation**: 1-10 point evaluation across 3 indicators: profitability, risk management, and diversification
+- **Real-time ETF Analysis**: Live ETF data retrieval and analysis through yfinance integrated via MCP Server
+- **Smart ETF Selection**: Intelligent selection of 3 optimal ETFs from hundreds of candidates
+- **Monte Carlo Simulation**: Advanced risk analysis with 1000 simulations for accurate predictions
+- **Correlation Analysis**: Diversification optimization through correlation matrix measurement
+- **Portfolio Evaluation**: Comprehensive assessment on profitability, risk management, and diversification
+- **Weight Allocation**: Optimal investment weight distribution across selected ETFs
 
-## Architecture
+## How It Works
 
-![Overall System Architecture](../static/portfolio_architect.png)
+The Portfolio Architect agent operates through a sophisticated 6-step portfolio design process:
 
-### Technology Stack
+### Agent Workflow
 
-- **AI Framework**: Strands Agents SDK
-- **Infrastructure**: AWS Bedrock AgentCore Runtime (serverless)
-  - Portfolio Architect Agent Runtime
+1. **Risk Profile Reception**: The agent receives your risk profile and financial targets from the Financial Analyst:
+   - Risk category (Conservative, Moderate, Aggressive)
+   - Required annual return percentage
+   - Recommended investment sectors
+   - Risk profile reasoning and constraints
+
+2. **Candidate ETF Selection**: The agent identifies 5 promising ETF candidates that align with:
+   - Your risk profile and sector preferences
+   - Target return requirements
+   - Market conditions and historical performance
+   - Diversification potential
+
+3. **Performance Analysis**: For each candidate ETF, the agent:
+   - Runs 1000 Monte Carlo simulations using 2 years of daily data
+   - Calculates expected annual returns
+   - Determines loss probability (risk of principal loss)
+   - Analyzes return distribution across 7 ranges
+   - Measures historical volatility
+
+4. **Correlation Analysis**: The agent measures diversification effects by:
+   - Generating a 5×5 correlation matrix
+   - Calculating correlation coefficients between ETF pairs (-1 to 1)
+   - Identifying assets with low correlation for better diversification
+   - Measuring combined portfolio risk reduction
+
+5. **Optimal Portfolio Construction**: The agent selects 3 final ETFs by:
+   - Balancing profitability with risk management
+   - Ensuring diversification through uncorrelated assets
+   - Allocating investment weights in optimal percentages
+   - Meeting your target return with minimum portfolio risk
+
+6. **Portfolio Evaluation**: Final assessment across 3 dimensions:
+   - **Profitability (1-10)**: Expected return achievement potential
+   - **Risk Management (1-10)**: Downside protection and volatility control
+   - **Diversification (1-10)**: Correlation-based risk reduction effectiveness
+
+### Processing Architecture
+
+```
+Financial Analyst Results
+    ↓
+[AgentCore Runtime]
+    ↓
+Portfolio Architect Agent
+    ├─ Select 5 ETF candidates
+    ├─ [MCP Server → yfinance]
+    │  ├─ Monte Carlo simulations (1000x)
+    │  ├─ Performance analysis
+    │  └─ Correlation matrix
+    ├─ Calculate optimal weights
+    └─ Evaluate portfolio (3 metrics)
+    ↓
+Optimized 3-ETF Portfolio with Allocations
+```
+
+## Technology Stack
+
+- **AI Framework**: AWS Bedrock AgentCore Runtime (dual runtimes)
+  - Portfolio Architect Runtime (main agent)
   - MCP Server Runtime (ETF data retrieval)
-- **LLM**: Claude 4.0 Sonnet (global cross region)
-- **Data Source**: yfinance (real-time ETF data)
-- **Protocol**: MCP (Model Context Protocol)
-- **Authentication**: Cognito JWT
-- **UI**: Streamlit
+- **LLM Model**: OpenAI GPT-OSS 120B
+- **Data Protocol**: MCP (Model Context Protocol)
+- **Data Source**: yfinance (real-time market data)
+- **Analysis Method**: Monte Carlo Simulation (1000 iterations)
+- **Infrastructure**: AWS (serverless, auto-scaling)
+- **Authentication**: AWS Cognito JWT
+- **UI Framework**: Streamlit
+- **Language**: Python
 
-## Installation and Setup
+## Setup Instructions
 
-### 1. Environment Setup
+### Prerequisites
+
+- AWS Account with Bedrock access
+- Python 3.8 or higher
+- AWS CLI configured with credentials
+- Financial Analyst agent deployed (generates deployment_info.json)
+
+### Step 1: Install Dependencies
 
 ```bash
-# Install dependencies from root folder
+# From root directory
 cd ..
 pip install -r requirements.txt
 
@@ -45,170 +111,149 @@ aws configure
 cd portfolio_architect
 ```
 
-### 2. Deployment
+### Step 2: Deploy MCP Server (Required First)
+
+The MCP Server provides real-time ETF data access and must be deployed before the main agent:
 
 ```bash
-# Deploy MCP Server first (required)
+# Deploy the MCP Server
 cd mcp_server
 python deploy_mcp.py
 
-# Deploy Portfolio Architect Runtime
+# Verify MCP deployment
+cat mcp_deployment_info.json
+```
+
+**What this does:**
+
+- Deploys the Model Context Protocol server to AWS Bedrock
+- Enables real-time ETF data retrieval from yfinance
+- Configures Monte Carlo simulation capabilities
+- Sets up correlation analysis tools
+
+### Step 3: Deploy Portfolio Architect Agent
+
+```bash
+# Deploy the Portfolio Architect agent
 cd ..
 python deploy.py
 
-# Check deployment status
+# Verify deployment
 cat deployment_info.json
 ```
 
-### 3. Streamlit Demo
+**What this does:**
+
+- Deploys the Portfolio Architect agent to AWS Bedrock
+- Links the agent to the MCP Server for data access
+- Configures the LLM model and analysis tools
+- Generates deployment metadata for the Streamlit app
+
+### Step 4: Run the Streamlit Web App
 
 ```bash
-# Run web app
+# Start the web interface
 streamlit run app.py
 
-# Access http://localhost:8501 in browser
+# Access the app at http://localhost:8501
 ```
 
-## Usage
+### Step 5: Use the Application
 
-### Input Information (Financial Analyst Results)
+1. Open your browser to `http://localhost:8501`
+2. Input the Financial Analyst results (risk profile, target return, sectors)
+3. Click "Design Portfolio" to run the agent
+4. View your optimized 3-ETF portfolio with allocations and analysis
 
-- **Risk Profile**: Conservative, Neutral, Aggressive
-- **Risk Profile Reasoning**: Age, investment experience, etc.
-- **Required Annual Return**: Target return rate (%)
-- **Recommended Investment Areas**: Multiple selection from 10 sectors
-- **Overall Assessment**: Investment strategy summary
-
-### Output Results
-
-![Portfolio Architect Output](../static/portfolio_architect_output.png)
-
-### Processing Flow
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant S as Streamlit
-    participant R as AgentCore Runtime
-    participant A as Portfolio Architect
-    participant M as MCP Server
-    participant Y as yfinance
-
-    U->>S: Input financial analysis results
-    S->>R: Portfolio design request
-    R->>A: Start analysis
-    A->>A: Select 5 ETF candidates
-    A->>M: ETF performance analysis request
-    M->>Y: Real-time data retrieval
-    Y-->>M: Return ETF data
-    M->>M: Monte Carlo simulation
-    M-->>A: Performance analysis results
-    A->>M: Correlation analysis request
-    M->>M: Calculate correlation matrix
-    M-->>A: Correlation results
-    A->>A: Select optimal 3 ETFs
-    A->>A: Determine investment weights
-    A-->>R: Portfolio complete
-    R-->>S: Return results (streaming)
-    S-->>U: Display visualization
-```
-
-## Portfolio Design Process
-
-### 1. Candidate ETF Selection
-
-- Select 5 candidates considering key_sectors and risk profile
-
-### 2. Performance Analysis
-
-- Monte Carlo simulation for each ETF (1000 iterations)
-- Calculate expected returns, loss probability, volatility
-
-### 3. Correlation Analysis
-
-- Generate 5x5 correlation matrix
-- Measure diversification effects
-
-### 4. Optimal 3 ETF Selection
-
-- **Balance returns and diversification effects**
-- Balance target return achievement and risk diversification
-
-### 5. Investment Weight Determination
-
-- Synthesize performance analysis and correlation results
-- Allocate 100% in integer ratios
-
-### 6. Portfolio Evaluation
-
-- Evaluate profitability, risk management, and diversification on 1-10 scale each
-
-## MCP Server Tools
-
-### analyze_etf_performance(ticker)
-
-- **Function**: Individual ETF performance analysis (1000 Monte Carlo simulations)
-- **Analysis Content**:
-  - Expected annual return calculation
-  - Loss probability (principal loss possibility)
-  - Historical annual return and volatility
-  - Return distribution by range (7 ranges: -20% and below ~ 30% and above)
-- **Data Period**: Based on 2 years of daily return data
-
-### calculate_correlation(tickers)
-
-- **Function**: Calculate correlation matrix between ETFs
-- **Analysis Content**:
-  - Generate 5x5 correlation matrix
-  - Calculate correlation coefficient for each ETF pair (-1 ~ 1)
-  - Measure diversification effects (lower correlation = higher diversification effect)
-- **Data Period**: Based on 2 years of daily return data (minimum 100+ days of common data required)
-
-## Customization
-
-### Model Configuration
-
-```python
-# portfolio_architect.py
-class Config:
-    MODEL_ID = "global.anthropic.claude-sonnet-4-20250514-v1:0"  # Claude 4.0 Sonnet (global cross region)
-    TEMPERATURE = 0.3
-    MAX_TOKENS = 3000
-```
-
-### Investment Sectors Modification
-
-```python
-# Modify options list in app.py
-options=[
-    "Technology Stocks",
-    "Healthcare",
-    # ... add/modify
-]
-```
-
-## Project Structure
+### Sample Output Breakdown
 
 ```
-portfolio_architect/
-├── portfolio_architect.py      # Main agent (AgentCore Runtime)
-├── deploy.py                   # AgentCore Runtime deployment
-├── cleanup.py                  # System cleanup
-├── app.py                      # Streamlit web app
-├── requirements.txt            # Python dependencies
-└── mcp_server/                 # MCP Server (AgentCore Runtime)
-    ├── server.py               # ETF data MCP server
-    ├── deploy_mcp.py           # MCP Server deployment
-    └── requirements.txt        # MCP Server dependencies
+┌──────────────────────────────────────────────────┐
+│     YOUR OPTIMIZED PORTFOLIO RESULTS             │
+├──────────────────────────────────────────────────┤
+│                                                  │
+│ PORTFOLIO COMPOSITION:                           │
+│ • VTI (US Total Market)         40%              │
+│ • VXUS (International)          35%              │
+│ • BND (US Bonds)                25%              │
+│                                                  │
+│ PROJECTED PERFORMANCE:                           │
+│ Expected Annual Return: 16.8%                    │
+│ Probability of Loss: 8.2%                        │
+│ Portfolio Volatility: 14.5%                      │
+│                                                  │
+│ CORRELATION ANALYSIS:                            │
+│ VTI-VXUS Correlation: 0.72 (Moderate)           │
+│ VTI-BND  Correlation: 0.15 (Low - Good!)        │
+│ VXUS-BND Correlation: 0.08 (Very Low - Good!)   │
+│ Overall Diversification Score: 7.8/10            │
+│                                                  │
+│ PORTFOLIO SCORES:                                │
+│ Profitability:    8.2/10 (Meets target return)  │
+│ Risk Management:  8.1/10 (Conservative approach)│
+│ Diversification:  8.5/10 (Well-balanced)        │
+│ ─────────────────────────────                    │
+│ OVERALL SCORE:    8.3/10                         │
+│                                                  │
+│ RECOMMENDATION:                                  │
+│ This portfolio aligns with your moderate risk    │
+│ profile and achieves your 18.2% target through   │
+│ a well-diversified mix. Monitor quarterly and    │
+│ rebalance annually.                              │
+│                                                  │
+└──────────────────────────────────────────────────┘
 ```
 
-## Full System Integration
+## MCP Server & Tools
 
-This Portfolio Architect is the second stage of the **AI Fund Manager** system:
+### MCP Server Role
 
-1. **Financial Analyst** → Financial analysis and risk profile assessment
-2. **Portfolio Architect** (current) → Real-time ETF data-based portfolio design
-3. **Risk Manager** → News analysis and risk scenario planning
-4. **Fund Manager** → Full agent integration and final report
+The MCP Server acts as the bridge between the Portfolio Architect agent and financial market data. It provides:
 
-The complete system can be run from `../fund_manager/app.py`.
+- Real-time ETF data retrieval from yfinance
+- Monte Carlo simulation engine for risk analysis
+- Correlation matrix calculations
+- Performance metrics computation
+
+### Available Tools
+
+#### analyze_etf_performance(ticker)
+
+**Purpose**: Comprehensive performance analysis for an individual ETF
+
+**Analysis Details**:
+
+- Expected annual return (%)
+- Loss probability (principal loss possibility, %)
+- Historical annual return (%)
+- Return volatility (%)
+- Return distribution across 7 ranges:
+  - Below -20%
+  - -20% to -10%
+  - -10% to 0%
+  - 0% to 10%
+  - 10% to 20%
+  - 20% to 30%
+  - Above 30%
+
+**Data Used**: 2 years of daily returns (minimum 500+ trading days)
+
+**Simulation**: 1000 Monte Carlo iterations
+
+#### calculate_correlation(tickers)
+
+**Purpose**: Measure diversification benefits between multiple ETFs
+
+**Analysis Details**:
+
+- 5×5 correlation matrix (for up to 5 ETFs)
+- Correlation coefficient for each pair (-1.0 to 1.0)
+- Interpretation guide:
+  - 1.0 = Perfect positive correlation (no diversification)
+  - 0.0 = No correlation (some diversification)
+  - -1.0 = Perfect negative correlation (maximum diversification)
+- Diversification effect measurement
+
+**Data Used**: 2 years of daily returns (minimum 100+ days of common data)
+
+**Calculation Method**: Pearson correlation coefficient

@@ -1,35 +1,83 @@
-# Financial Analyst
+## What is the Financial Analyst Agent?
 
-AI Financial Analyst powered by **AWS Bedrock AgentCore Runtime**.
+The Financial Analyst is an intelligent AI agent designed to assess your personal financial situation and provide tailored investment recommendations. It analyzes your financial profile—including your age, investment experience, available capital, and investment goals—to generate a customized risk profile and recommend suitable investment sectors for your portfolio.
 
-## Overview
-
-An AI agent that analyzes personal financial situations to calculate risk profiles and target returns.
+This agent serves as the **first stage** in the AI Fund Manager system, establishing the foundation for personalized wealth management by understanding your financial circumstances and risk tolerance.
 
 ### Core Features
 
-- **Financial Analysis**: Risk profile assessment based on age, investment experience, and target amounts
-- **Return Calculation**: Precise target return calculation using Calculator tool
-- **Sector Recommendations**: Investment sector recommendations tailored to individual preferences (displayed as tags)
+- **Financial Analysis**: Comprehensive risk profile assessment based on age, investment experience, available capital, and investment timeline
+- **Return Calculation**: Precise target return calculations using advanced calculation tools
+- **Sector Recommendations**: Intelligent investment sector recommendations tailored to your risk profile and stated preferences
+- **Risk Profile Generation**: Detailed assessment of your investment risk tolerance (Conservative, Moderate, Aggressive)
 
-## Architecture
+## How It Works
 
-![Overall System Architecture](../static/financial_analyst.png)
+The Financial Analyst agent operates through the following intelligent process:
 
-### Technology Stack
+### Agent Workflow
 
-- **AI Framework**: Strands Agents SDK
-- **Infrastructure**: AWS Bedrock AgentCore Runtime (serverless)
-- **LLM**: OpenAI GPT-OSS 120B
-- **Tools**: Calculator (return calculation)
-- **UI**: Streamlit
+1. **Information Collection**: The agent starts by collecting essential financial information from you:
+   - Investment amount (in hundreds of millions)
+   - Target return amount after 1 year
+   - Age and investment experience level
+   - Investment purpose and timeline
+   - Interest areas across 10 investment sectors
 
-## Installation and Setup
+2. **Financial Analysis**: The agent analyzes your profile using:
+   - **Age-based risk assessment**: Younger investors typically have higher risk tolerance
+   - **Experience evaluation**: Investment experience level affects risk capacity
+   - **Capital analysis**: Available funds determine investment flexibility
+   - **Return calculation**: Precise calculations of required returns to meet your targets
 
-### 1. Environment Setup
+3. **Risk Profile Determination**: Based on the analysis, the agent determines your risk profile:
+   - **Conservative**: Lower risk tolerance, focus on capital preservation
+   - **Moderate**: Balanced approach between growth and stability
+   - **Aggressive**: Higher risk tolerance, focus on capital growth
+
+4. **Sector Recommendations**: The agent recommends investment sectors that align with:
+   - Your calculated risk profile
+   - Your stated areas of interest
+   - Current market conditions and historical performance
+   - Diversification principles
+
+### Processing Architecture
+
+```
+User Input
+    ↓
+[AgentCore Runtime]
+    ↓
+Financial Analyst Agent
+    ├─ Analyze financial profile
+    ├─ Calculate risk assessment
+    ├─ Compute target returns
+    └─ Select recommended sectors
+    ↓
+Sector Recommendations & Risk Profile
+```
+
+## Technology Stack
+
+- **AI Framework**: AWS Bedrock AgentCore Runtime
+- **LLM Model**: OpenAI GPT-OSS 120B
+- **Infrastructure**: AWS (serverless, auto-scaling)
+- **Tools**: Built-in Calculator for precise return calculations
+- **UI Framework**: Streamlit
+- **Language**: Python
+
+## Setup Instructions
+
+### Prerequisites
+
+- AWS Account with Bedrock access
+- Python 3.8 or higher
+- AWS CLI configured with credentials
+
+### Step 1: Install Dependencies
 
 ```bash
-# Install dependencies from root folder
+# From root directory
 cd ..
 pip install -r requirements.txt
 
@@ -40,103 +88,65 @@ aws configure
 cd financial_analyst
 ```
 
-### 2. Deployment
+### Step 2: Deploy AgentCore Runtime
+
+The agent must be deployed to AWS Bedrock before use:
 
 ```bash
-# Deploy AgentCore Runtime (required)
+# Deploy the Financial Analyst agent
 python deploy.py
 
-# Check deployment status (deployment_info.json auto-generated)
+# Verify deployment (creates deployment_info.json)
 cat deployment_info.json
 ```
 
-### 3. Streamlit Demo
+**What this does:**
+
+- Deploys the Financial Analyst agent to AWS Bedrock
+- Configures the LLM model and tools
+- Generates deployment metadata for the Streamlit app
+- Sets up the agent endpoint for API calls
+
+### Step 3: Run the Streamlit Web App
 
 ```bash
-# Run web app
+# Start the web interface
 streamlit run app.py
 
-# Access http://localhost:8501 in browser
+# Access the app at http://localhost:8501
 ```
 
-## Usage
+### Step 4: Use the Application
 
-### Input Information
+1. Open your browser to `http://localhost:8501`
+2. Input your financial information using the form
+3. Click "Analyze" to run the agent
+4. View your personalized risk profile and recommendations
 
-- **Available Investment Amount**: In hundred millions (e.g., 0.5 = 50 million)
-- **Target Amount**: Target amount after 1 year
-- **Age**: Age range selection
-- **Investment Experience**: Years of stock investment experience
-- **Investment Purpose**: Short-term profit, retirement planning, etc.
-- **Areas of Interest**: Multiple selection from 10 investment sectors
-
-### Output Results
-
-![Financial Analyst Output](../static/financial_analyst_output.png)
-
-### Processing Flow
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant S as Streamlit
-    participant R as AgentCore Runtime
-    participant A as Financial Analyst
-    participant C as Calculator
-
-    U->>S: Input investment info
-    S->>R: Analysis request
-    R->>A: Start financial analysis
-    A->>C: Calculate returns
-    C-->>A: Calculation results
-    A->>A: Assess risk profile
-    A->>A: Select recommended sectors
-    A-->>R: Analysis complete
-    R-->>S: Return results
-    S-->>U: Display as tags
-```
-
-## Customization
-
-### Model Configuration
-
-```python
-# financial_analyst.py
-class Config:
-    MODEL_ID = "openai.gpt-oss-120b-1:0"  # Change to desired model
-    TEMPERATURE = 0.1
-    MAX_TOKENS = 3000
-```
-
-### Investment Sectors Modification
-
-```python
-# Modify options list in app.py
-options=[
-    "Dividend Stocks (Stable Dividends)",
-    "Growth Stocks (Tech/Bio)",
-    # ... add/modify
-]
-```
-
-## Project Structure
+### Sample Output Breakdown
 
 ```
-financial_analyst/
-├── financial_analyst.py    # Main agent (AgentCore Runtime)
-├── deploy.py               # AgentCore Runtime deployment
-├── cleanup.py              # System cleanup
-├── app.py                  # Streamlit web app
-└── requirements.txt        # Python dependencies
+┌─────────────────────────────────────────────┐
+│     YOUR FINANCIAL ANALYSIS RESULTS         │
+├─────────────────────────────────────────────┤
+│                                             │
+│ Risk Profile: MODERATE                      │
+│ • Age: 35-45 years                          │
+│ • Experience: 5-10 years                    │
+│ • Required Return: 18.2% annually           │
+│                                             │
+│ Investment Amount: $50M → $60M Target       │
+│ Return on Investment: $10M (18.2%)          │
+│ Feasibility: ACHIEVABLE with proper mix     │
+│                                             │
+│ Recommended Sectors:                        │
+│ [Tech Stocks] [Healthcare] [Dividend]       │
+│ [Infrastructure] [International]            │
+│                                             │
+│ Analysis Notes:                             │
+│ Your moderate risk profile aligns well      │
+│ with your experience level. Diversify       │
+│ across growth and stability sectors...      │
+│                                             │
+└─────────────────────────────────────────────┘
 ```
-
-## Full System Integration
-
-This Financial Analyst is the first stage of the **AI Fund Manager** system:
-
-1. **Financial Analyst** (current) → Financial analysis and risk profile assessment
-2. **Portfolio Architect** → Real-time ETF data-based portfolio design
-3. **Risk Manager** → News analysis and risk scenario planning
-4. **Fund Manager** → Full agent integration and final report
-
-The complete system can be run from `../fund_manager/app.py`.

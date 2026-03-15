@@ -1,126 +1,102 @@
-# Risk Manager
+## What is the Risk Manager Agent?
 
-AI Risk Manager powered by **AWS Bedrock AgentCore Gateway**.
+The Risk Manager is an intelligent AI agent that monitors real-time market conditions, analyzes financial news, and evaluates macroeconomic indicators to identify risks to your portfolio. Based on the portfolio design from the Portfolio Architect, this agent develops strategic risk scenarios and recommends portfolio adjustment strategies to protect your investments under various economic conditions.
 
-## Overview
-
-An AI agent that analyzes real-time news and macroeconomic data based on Portfolio Architect's portfolio design results to plan risk scenarios and provide portfolio adjustment strategies according to economic conditions.
+This agent serves as the **third stage** in the AI Fund Manager system, transforming portfolio allocations into risk-aware strategies by anticipating market challenges and economic shifts.
 
 ### Core Features
 
-- **Real-time News Analysis**: Collect latest news for portfolio ETFs and identify risk factors
-- **Macroeconomic Indicator Monitoring**: Track major indicators including Dollar Index, Treasury yields, VIX, and oil prices
-- **Scenario Planning**: Derive 2 key economic scenarios and establish portfolio adjustment strategies
-- **Planning Pattern**: Systematic workflow-based risk analysis and response planning
+- **Real-time News Analysis**: Automated collection and analysis of latest news affecting your portfolio ETFs
+- **Macroeconomic Monitoring**: Continuous tracking of key economic indicators (interest rates, volatility, commodities)
+- **Geopolitical Risk Assessment**: Regional ETF analysis for global economic and political risk factors
+- **Scenario Planning**: Development of 2 core economic scenarios with portfolio adjustment strategies
+- **Risk Mitigation Strategies**: Specific allocation adjustments to protect portfolio performance under different conditions
 
-## Architecture
+## How It Works
 
-![Overall System Architecture](../static/risk_manager.png)
+The Risk Manager agent operates through a sophisticated 6-step risk analysis process:
 
-### Technology Stack
+### Agent Workflow
 
-- **AI Framework**: Strands Agents SDK
-- **Infrastructure**: AWS Bedrock AgentCore Runtime + Gateway
-  - Risk Manager Agent Runtime
-  - MCP Gateway (expose Lambda functions as AI tools)
-  - Lambda Layer (yfinance library packaging)
-  - Lambda Functions (news and macroeconomic data retrieval)
-- **LLM**: Claude 3.7 Sonnet (cross region)
-- **Data Source**: yfinance (real-time news and market data)
-- **Protocol**: MCP (Model Context Protocol)
-- **Authentication**: Cognito JWT OAuth2
-- **UI**: Streamlit
+1. **Portfolio Reception & Analysis**: The agent receives your portfolio design from the Portfolio Architect:
+   - 3 selected ETFs with allocation percentages
+   - Portfolio performance scores (profitability, risk management, diversification)
+   - Investment strategy and composition reasoning
 
-### Processing Flow
+2. **ETF-Specific News Collection**: For each of your 3 ETFs, the agent:
+   - Retrieves latest 5 news articles using the get_product_news tool
+   - Analyzes news sentiment and risk implications
+   - Identifies sector-specific threats and opportunities
+   - Flags major announcements or events affecting holdings
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant S as Streamlit
-    participant R as AgentCore Runtime
-    participant A as Risk Manager
-    participant G as MCP Gateway
-    participant L as Lambda Function
-    participant Y as yfinance
+3. **Macroeconomic Indicator Analysis**: The agent monitors 7 key economic indicators:
+   - **Interest Rates**: US 2-year & 10-year Treasury yields, Dollar Index
+   - **Volatility & Commodities**: VIX Index, WTI crude oil, gold futures
+   - **Equity Markets**: S&P 500 Index
+   - Interprets current levels and trends relative to historical averages
 
-    U->>S: Input portfolio design results
-    S->>R: Risk analysis request
-    R->>A: Start analysis
-    A->>A: Identify portfolio ETFs
+4. **Geopolitical Risk Assessment**: The agent tracks 5 major regional ETFs:
+   - China A-Shares (ASHR), Emerging Markets (EEM), Europe (VGK)
+   - Japan (EWJ), South Korea (EWY)
+   - Evaluates regional political/economic risks affecting global portfolios
 
-    loop For each ETF
-        A->>G: Call get_product_news
-        G->>L: Execute Lambda function
-        L->>Y: Retrieve news data
-        Y-->>L: Return ETF news
-        L-->>G: Return news results
-        G-->>A: Provide news data
-    end
+5. **Scenario Development**: The agent synthesizes all data to create:
+   - **Scenario 1**: Best-case or stable economic conditions
+   - **Scenario 2**: Challenging or high-risk economic conditions
+   - Probability assessment for each scenario
+   - Expected portfolio performance under each scenario
 
-    A->>G: Call get_market_data
-    G->>L: Execute Lambda function
-    L->>Y: Retrieve macroeconomic indicators
-    Y-->>L: Return market data
-    L-->>G: Return market results
-    G-->>A: Provide market data
+6. **Portfolio Adjustment Strategy**: The agent recommends:
+   - New allocation weights for each ETF under each scenario
+   - Specific rationale for each adjustment
+   - Implementation guidance
+   - Timeline and conditions for rebalancing
 
-    A->>G: Call get_geopolitical_indicators
-    G->>L: Execute Lambda function
-    L->>Y: Retrieve regional ETF data
-    Y-->>L: Return geopolitical data
-    L-->>G: Return geopolitical results
-    G-->>A: Provide geopolitical data
+### Processing Architecture
 
-    A->>A: Synthesize 3 data types to derive 2 scenarios
-    A->>A: Establish portfolio adjustment strategy
-    A-->>R: Risk analysis complete
-    R-->>S: Return results (streaming)
-    S-->>U: Display scenario-based visualization
+```
+Portfolio Design Results
+    ↓
+[AgentCore Runtime + Gateway]
+    ↓
+Risk Manager Agent
+    ├─ Retrieve portfolio ETFs
+    ├─ [Lambda Functions → yfinance]
+    │  ├─ News collection (per ETF)
+    │  ├─ Macroeconomic indicators
+    │  └─ Geopolitical data
+    ├─ Analyze market sentiment
+    ├─ Develop economic scenarios
+    └─ Calculate adjustment strategies
+    ↓
+Risk Scenarios with Portfolio Recommendations
 ```
 
-## Risk Analysis Process
+## Technology Stack
 
-### 1. Portfolio Analysis
+- **AI Framework**: AWS Bedrock AgentCore Runtime + Gateway
+- **Gateway Protocol**: MCP (Model Context Protocol)
+- **LLM Model**: OpenAI GPT-OSS 120B
+- **Lambda Infrastructure**: AWS Lambda with layers for dependencies
+- **Data Source**: yfinance (real-time market data and news)
+- **Authentication**: AWS Cognito JWT OAuth2
+- **Infrastructure**: AWS (serverless, auto-scaling)
+- **UI Framework**: Streamlit
+- **Language**: Python
 
-- Analyze input portfolio composition (3 ETFs + allocations)
-- Identify characteristics and risk factors of each ETF
+## Setup Instructions
 
-### 2. Real-time News Collection
+### Prerequisites
 
-- **get_product_news tool**: Collect latest 5 news articles for each ETF
-- Extract title, summary, and publication date information
-- Analyze risk factors and market sentiment
+- AWS Account with Bedrock, Lambda, and API Gateway access
+- Python 3.8 or higher
+- AWS CLI configured with credentials
+- Portfolio Architect agent deployed (generates deployment_info.json)
 
-### 3. Macroeconomic Indicator Monitoring
-
-- **get_market_data tool**: Real-time retrieval of 7 major economic indicators
-  - Interest rates: 2-year/10-year Treasury yields, Dollar Index
-  - Volatility/Commodities: VIX, WTI crude oil, gold futures
-  - Equity: S&P 500 Index
-
-### 4. Geopolitical Risk Analysis
-
-- **get_geopolitical_indicators tool**: Real-time retrieval of 5 major regional ETFs
-  - Asia: China A-shares, Japan, South Korea ETFs
-  - Global: Emerging markets, Europe ETFs
-
-### 5. Scenario Development
-
-- **2 Core Scenarios**: Comprehensive analysis of news + macroeconomic + geopolitical factors
-- Evaluate probability of occurrence and impact for each scenario
-
-### 6. Portfolio Adjustment Strategy
-
-- **Maintain Existing ETFs**: Adjust only allocations without adding new assets
-- Calculate optimal allocation ratios for each scenario
-- Provide specific adjustment reasoning and implementation plans
-
-## Installation and Setup
-
-### 1. Environment Setup
+### Step 1: Install Dependencies
 
 ```bash
-# Install dependencies from root folder
+# From root directory
 cd ..
 pip install -r requirements.txt
 
@@ -131,130 +107,189 @@ aws configure
 cd risk_manager
 ```
 
-### 2. Deployment (4-step sequential deployment required)
+### Step 2: Deploy Lambda Layer (Required First)
+
+The Lambda Layer packages the yfinance library for Lambda functions:
 
 ```bash
-# Step 1: Deploy Lambda Layer (yfinance library)
+# Deploy the Lambda Layer
 cd lambda_layer
 python deploy_lambda_layer.py
 
-# Step 2: Deploy Lambda function (news/market data retrieval)
+# Verify deployment
+cat layer_deployment_info.json
+```
+
+**What this does:**
+
+- Packages yfinance library for AWS Lambda
+- Creates a layer that Lambda functions can reference
+- Enables market data retrieval capabilities
+
+### Step 3: Deploy Lambda Functions
+
+The Lambda functions provide data retrieval capabilities:
+
+```bash
+# Deploy Lambda functions
 cd ../lambda
 python deploy_lambda.py
 
-# Step 3: Deploy MCP Gateway (expose Lambda as AI tools)
+# Verify deployment
+cat lambda_deployment_info.json
+```
+
+**What this does:**
+
+- Deploys functions for news, market data, and geopolitical data retrieval
+- Links to the yfinance Lambda Layer
+- Configures IAM permissions for API access
+
+### Step 4: Deploy MCP Gateway
+
+The Gateway exposes Lambda functions as tools for the AI agent:
+
+```bash
+# Deploy the MCP Gateway
 cd ../gateway
 python deploy_gateway.py
 
-# Step 4: Deploy Risk Manager Runtime
+# Verify deployment
+cat gateway_deployment_info.json
+```
+
+**What this does:**
+
+- Creates MCP Gateway to expose Lambda functions as AI tools
+- Configures tool schemas and parameters
+- Sets up authentication and authorization
+
+### Step 5: Deploy Risk Manager Agent
+
+```bash
+# Deploy the Risk Manager agent
 cd ..
 python deploy.py
 
-# Check deployment status
+# Verify deployment (creates deployment_info.json)
 cat deployment_info.json
 ```
 
-**Note**: Each step must be executed in order, and the next step should only proceed after the previous step is completed.
+**What this does:**
 
-### 3. Streamlit Demo
+- Deploys the Risk Manager agent to AWS Bedrock
+- Links the agent to the MCP Gateway for tool access
+- Configures the LLM model and analysis parameters
+
+### Step 6: Run the Streamlit Web App
 
 ```bash
-# Run web app
+# Start the web interface
 streamlit run app.py
 
-# Access http://localhost:8501 in browser
+# Access the app at http://localhost:8501
 ```
 
-## Usage
+### Step 7: Use the Application
 
-### Input Information (Portfolio Architect Results)
+1. Open your browser to `http://localhost:8501`
+2. Input your portfolio design results from Portfolio Architect
+3. Click "Analyze Risks" to run the agent
+4. View your risk scenarios and adjustment strategies
 
-- **Portfolio Allocation**: 3 ETFs and their respective investment weights (%)
-- **Portfolio Composition Reasoning**: Investment strategy and ETF selection reasoning
-- **Portfolio Evaluation Scores**: Profitability, risk management, diversification (1-10 points)
+### Sample Output Breakdown
 
-### Output Results
-
-![Risk Manager Output](../static/risk_manager_output.png)
+```
+┌─────────────────────────────────────────────────────┐
+│     YOUR PORTFOLIO RISK ANALYSIS RESULTS            │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│ CURRENT MARKET ENVIRONMENT:                         │
+│ • 10-Year Treasury Yield: 4.25% (↑ rising)         │
+│ • VIX Volatility Index: 18.5 (normal range)        │
+│ • USD Index: 104.2 (strong dollar)                 │
+│ • Oil Price: $82/barrel (stable)                    │
+│                                                     │
+│ ECONOMIC SCENARIOS:                                 │
+│                                                     │
+│ SCENARIO 1: Continued Expansion (65% probability)  │
+│ Market Conditions: Strong earnings, stable rates   │
+│ Recommended Allocation:                             │
+│   • VTI: 45% (↑ increase exposure)                 │
+│   • VXUS: 40% (maintain international)             │
+│   • BND: 15% (reduce defensive bonds)              │
+│ Expected Return: +18.5% annual                      │
+│                                                     │
+│ SCENARIO 2: Market Correction (35% probability)    │
+│ Market Conditions: Rising rates, earnings miss      │
+│ Recommended Allocation:                             │
+│   • VTI: 25% (↓ reduce equity risk)                │
+│   • VXUS: 20% (↓ de-risk international)            │
+│   • BND: 55% (↑ increase defensive)                │
+│ Expected Return: +2.3% annual                       │
+│                                                     │
+│ TOP RISKS IDENTIFIED:                               │
+│ 1. Interest rate spike (Fed policy shift)           │
+│ 2. China slowdown (emerging market exposure)        │
+│ 3. Tech earnings weakness (sector concentration)    │
+│                                                     │
+│ RECOMMENDED ACTIONS:                                │
+│ • Monitor Fed meeting dates (next: March 20)       │
+│ • Set rebalance trigger if VIX > 25                │
+│ • Consider reducing tech overweight                 │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+```
 
 ## Lambda Tools Details
 
 ### get_product_news(ticker)
 
-- **Function**: Retrieve latest 5 news articles for specific ETF
-- **Data Source**: yfinance API
-- **Output**: Title, summary, publication date, link information
-- **Purpose**: ETF-specific risk factor and market sentiment analysis
+**Purpose**: Retrieve latest ETF-specific news and sentiment
+
+**Data Retrieved**:
+
+- Latest 5 news articles related to the ETF
+- Article titles, summaries, and publication dates
+- Source attribution and links
+- Sentiment indicators (positive/negative/neutral)
+
+**Data Source**: yfinance API
+**Use Case**: Identify immediate risk factors and market sentiment for each holding
 
 ### get_market_data()
 
-- **Function**: Real-time retrieval of major macroeconomic indicators (7 indicators)
-- **Indicator Composition**:
-  - **Interest Rate Indicators** (3): US 2-year Treasury yield, US 10-year Treasury yield, US Dollar Strength Index
-  - **Volatility/Commodities** (3): VIX Volatility Index, WTI crude oil futures price, gold futures price
-  - **Equity Index** (1): S&P 500 Index
-- **Purpose**: Macroeconomic environment analysis and economic scenario development
+**Purpose**: Monitor key macroeconomic indicators
+
+**Indicators Tracked** (7 total):
+
+| Indicator              | Ticker | Category       | Purpose                             |
+| ---------------------- | ------ | -------------- | ----------------------------------- |
+| 2-Year Treasury Yield  | ^IRX   | Interest Rates | Short-term rate expectations        |
+| 10-Year Treasury Yield | ^TNX   | Interest Rates | Long-term rate environment          |
+| USD Strength Index     | DXY    | Interest Rates | Dollar strength effects             |
+| VIX Volatility Index   | ^VIX   | Volatility     | Market fear/complacency             |
+| WTI Crude Oil          | CL=F   | Commodities    | Energy/inflation trends             |
+| Gold Futures           | GC=F   | Commodities    | Inflation hedge, risk-off indicator |
+| S&P 500 Index          | ^GSPC  | Equity         | Overall market health               |
+
+**Data Source**: yfinance
+**Update Frequency**: Real-time market prices
+**Use Case**: Develop economic scenarios based on current market conditions
 
 ### get_geopolitical_indicators()
 
-- **Function**: Real-time retrieval of major regional ETFs (5 regions)
-- **Regional Composition**:
-  - **China** (ASHR): China A-Shares ETF
-  - **Emerging Markets** (EEM): Emerging Markets ETF
-  - **Europe** (VGK): Europe ETF
-  - **Japan** (EWJ): Japan ETF
-  - **South Korea** (EWY): South Korea ETF
-- **Purpose**: Geopolitical risk and regional market condition analysis
+**Purpose**: Assess regional economic and political risks
 
-## Customization
+**Regional ETFs Monitored** (5 total):
 
-### Model Configuration
+| Region           | ETF Ticker | ETF Name             | Risk Factors                      |
+| ---------------- | ---------- | -------------------- | --------------------------------- |
+| China            | ASHR       | China A-Shares       | Regulatory, geopolitical tensions |
+| Emerging Markets | EEM        | Emerging Markets ETF | Currency, political instability   |
+| Europe           | VGK        | Vanguard Europe ETF  | Economic slowdown, energy         |
+| Japan            | EWJ        | iShares Japan        | Deflation, currency, aging        |
+| South Korea      | EWY        | iShares Korea ETF    | North Korea, tech concentration   |
 
-```python
-# risk_manager.py
-class Config:
-    MODEL_ID = "us.anthropic.claude-3-7-sonnet-20250219-v1:0"  # Claude 3.7 Sonnet (us region)
-    TEMPERATURE = 0.2
-    MAX_TOKENS = 4000
-```
-
-### Adding/Modifying Market Indicators
-
-```python
-# Modify MARKET_INDICATORS dictionary in lambda/lambda_function.py
-MARKET_INDICATORS = {
-    "new_indicator": {"ticker": "TICKER_SYMBOL", "description": "Indicator description"},
-    # ... existing indicators
-}
-```
-
-## Project Structure
-
-```
-risk_manager/
-├── risk_manager.py         # Main agent (AgentCore Runtime)
-├── deploy.py               # Risk Manager Runtime deployment (final step of 4)
-├── cleanup.py              # System cleanup
-├── app.py                  # Streamlit web app
-├── requirements.txt        # Python dependencies
-├── lambda_layer/           # Lambda Layer (yfinance library)
-│   ├── deploy_lambda_layer.py    # Layer deployment script
-│   └── layer-yfinance.zip        # yfinance library package
-├── lambda/                 # Lambda functions (news/market data retrieval)
-│   ├── deploy_lambda.py          # Lambda deployment script
-│   └── lambda_function.py        # News and market data retrieval function
-└── gateway/                # MCP Gateway (expose Lambda as AI tools)
-    ├── deploy_gateway.py         # Gateway deployment script
-    └── target_config.py          # MCP tool schema definition
-```
-
-## Full System Integration
-
-This Risk Manager is the third stage of the **AI Fund Manager** system:
-
-1. **Financial Analyst** → Financial analysis and risk profile assessment
-2. **Portfolio Architect** → Real-time ETF data-based portfolio design
-3. **Risk Manager** (current) → News analysis and risk scenario planning
-4. **Fund Manager** → Full agent integration and final report
-
-The complete system can be run from `../fund_manager/app.py`.
+**Data Source**: yfinance regional ETF data
+**Use Case**: Understand global risk concentration and diversification effectiveness
