@@ -202,7 +202,7 @@ Your Financial Info
            └──────────────┘
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 AgenticAI_Fund_Manager/
